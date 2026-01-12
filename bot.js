@@ -10,33 +10,44 @@ const client = new Client({
 })
 
 const TOKEN = process.env.TOKEN
-const ROBLOX_URL = process.env.ROBLOX_URL
-const API_KEY = process.env.API_KEY
+
+const cars = ["gol","civic","corolla","nivus"]
 
 client.on("ready", () => {
   console.log("Bot online")
 })
 
+function makeKey() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let k = ""
+  for (let i=0;i<10;i++) k += chars[Math.floor(Math.random()*chars.length)]
+  return k
+}
+
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return
   if (!msg.content.startsWith("/")) return
 
-  const carro = msg.content.replace("/", "").toLowerCase()
+  const [cmd, robloxId] = msg.content.split(" ")
+  const car = cmd.replace("/","").toLowerCase()
 
-  try {
-    const res = await axios.post(ROBLOX_URL, {
-      carro: carro
-    }, {
-      headers: {
-        authorization: API_KEY
-      }
-    })
+  if (!cars.includes(car)) return
 
-    msg.reply(`🚗 **KEY GERADA**\nCarro: ${carro}\nKey: \`${res.data.key}\``)
-
-  } catch (err) {
-    msg.reply("Erro ao gerar key.")
+  if (!robloxId) {
+    msg.reply("Use: /"+car+" <RobloxUserId>")
+    return
   }
+
+  const key = makeKey()
+
+  await axios.post("https://memory-store.roblox.com/queues/DiscordKeys/entries", {
+    body: JSON.stringify({
+      userId: robloxId,
+      car: car
+    })
+  })
+
+  msg.reply(`🚗 Key gerada\nCarro: ${car}\nUserId: ${robloxId}`)
 })
 
 client.login(TOKEN)
